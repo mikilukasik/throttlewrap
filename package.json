@@ -1,0 +1,41 @@
+{
+  "name": "throttlewrap",
+  "version": "0.0.1",
+  "description": "Wrap and throttle async functions with adaptive processing",
+  "main": "index.js",
+  "scripts": {
+    "test": "nyc --check-coverage --lines 100 --functions 100 mocha",
+    "lint": "./node_modules/.bin/eslint .",
+    "lint-fix": "./node_modules/.bin/eslint . --fix"
+  },
+  "pre-commit": [
+    "lint",
+    "test"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mikilukasik/throttlewrap"
+  },
+  "keywords": [
+    "throttle",
+    "async",
+    "promise",
+    "adaptive"
+  ],
+  "author": "mikilukasik",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/mikilukasik/throttlewrap/issues"
+  },
+  "homepage": "https://github.com/mikilukasik/throttlewrap#readme",
+  "devDependencies": {
+    "chai": "^4.2.0",
+    "eslint": "^5.9.0",
+    "eslint-config-airbnb-base": "^13.1.0",
+    "eslint-plugin-import": "^2.14.0",
+    "istanbul": "^0.4.5",
+    "mocha": "^5.2.0",
+    "nyc": "^13.1.0",
+    "pre-commit": "^1.2.2"
+  }
+}
