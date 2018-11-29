@@ -63,6 +63,7 @@ const processRules = (instance) => {
   if (!instance.rules) return;
   const now = Date.now();
   const wasThreaded = instance.threads;
+  const oldInterval = instance.interval;
 
   instance.rules.forEach((rule) => {
     if (typeof rule === 'function') {
@@ -82,6 +83,8 @@ const processRules = (instance) => {
   if (instance.threads < instance.threadsMin) instance.threads = instance.threadsMin;
   if (instance.threads > instance.threadsMax) instance.threads = instance.threadsMax;
   if (wasThreaded && instance.threads < 1) instance.threads = 1;
+
+  if (instance.interval !== oldInterval) instance.rescheduleWorkers(oldInterval);
 };
 
 module.exports = processRules;

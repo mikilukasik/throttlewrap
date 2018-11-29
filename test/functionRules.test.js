@@ -18,8 +18,8 @@ describe('function rules', () => {
       }],
     });
     tester.run(() => wrapped('foo')).then(({ took }) => {
-      expect(took).to.be.greaterThan(1220);
-      expect(took).to.be.lessThan(1275);
+      expect(took).to.be.greaterThan(1095);
+      expect(took).to.be.lessThan(1150);
       expect(tw(wrapped).interval).to.eql(62.5);
       done();
     }).catch(done);
@@ -40,8 +40,8 @@ describe('function rules', () => {
       }],
     });
     tester.run(() => wrapped('foo')).then(({ took }) => {
-      expect(took).to.be.greaterThan(1220);
-      expect(took).to.be.lessThan(1275);
+      expect(took).to.be.greaterThan(1095);
+      expect(took).to.be.lessThan(1150);
       expect(tw(wrapped).interval).to.eql(62.5);
       done();
     }).catch(done);

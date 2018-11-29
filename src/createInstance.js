@@ -1,4 +1,6 @@
-const defaultOptions = { isError: err => err };
+const rescheduleWorkers = require('./rescheduleWorkers');
+
+const defaultOptions = { isError: (err, res, rejected) => err || rejected };
 
 const createInstance = (fn, _options = {}) => {
   const options = Object.assign({}, defaultOptions, { fn }, typeof fn === 'function' ? _options : fn);
@@ -41,6 +43,7 @@ const createInstance = (fn, _options = {}) => {
 
   const instance = {
     q: [],
+    workers: [],
     fn,
     threads,
     type,
@@ -56,6 +59,8 @@ const createInstance = (fn, _options = {}) => {
     firstCallTime: null,
     nextFreeTimeslot: Date.now(),
   };
+
+  instance.rescheduleWorkers = rescheduleWorkers.bind(instance);
 
   return instance;
 };

@@ -106,8 +106,8 @@ describe('object rules', () => {
       }],
     });
     tester.run(() => wrapped('foo')).then(({ took }) => {
-      expect(took).to.be.greaterThan(1220);
-      expect(took).to.be.lessThan(1275);
+      expect(took).to.be.greaterThan(1095);
+      expect(took).to.be.lessThan(1150);
       expect(tw(wrapped).interval).to.eql(62.5);
       done();
     }).catch(done);
@@ -123,8 +123,8 @@ describe('object rules', () => {
       }],
     });
     tester.run(() => wrapped('foo').catch(() => {})).then(({ took }) => {
-      expect(took).to.be.greaterThan(1720);
-      expect(took).to.be.lessThan(1775);
+      expect(took).to.be.greaterThan(1845);
+      expect(took).to.be.lessThan(1900);
       expect(tw(wrapped).interval).to.eql(500);
       done();
     }).catch(done);
@@ -140,8 +140,8 @@ describe('object rules', () => {
       }],
     });
     tester.run(() => wrapped('foo').catch(() => {})).then(({ took }) => {
-      expect(took).to.be.greaterThan(1720);
-      expect(took).to.be.lessThan(1775);
+      expect(took).to.be.greaterThan(1845);
+      expect(took).to.be.lessThan(1900);
       expect(tw(wrapped).interval).to.eql(500);
       done();
     }).catch(done);
@@ -157,8 +157,8 @@ describe('object rules', () => {
       }],
     });
     tester.run(() => wrapped('foo')).then(({ took }) => {
-      expect(took).to.be.greaterThan(1220);
-      expect(took).to.be.lessThan(1275);
+      expect(took).to.be.greaterThan(1095);
+      expect(took).to.be.lessThan(1150);
       expect(tw(wrapped).interval).to.eql(62.5);
       done();
     }).catch(done);
@@ -174,8 +174,8 @@ describe('object rules', () => {
       }],
     });
     tester.run(() => wrapped('foo').catch(() => {})).then(({ took }) => {
-      expect(took).to.be.greaterThan(895);
-      expect(took).to.be.lessThan(950);
+      expect(took).to.be.greaterThan(1195);
+      expect(took).to.be.lessThan(1250);
       expect(tw(wrapped).interval).to.eql(1025);
       done();
     }).catch(done);
@@ -191,8 +191,8 @@ describe('object rules', () => {
       }],
     });
     tester.run(() => wrapped('foo')).then(({ took }) => {
-      expect(took).to.be.greaterThan(1245);
-      expect(took).to.be.lessThan(1300);
+      expect(took).to.be.greaterThan(1145);
+      expect(took).to.be.lessThan(1200);
       expect(tw(wrapped).interval).to.eql(100);
       done();
     }).catch(done);
@@ -209,8 +209,8 @@ describe('object rules', () => {
       }],
     });
     tester.run(() => wrapped('foo')).then(({ took }) => {
-      expect(took).to.be.greaterThan(1295);
-      expect(took).to.be.lessThan(1350);
+      expect(took).to.be.greaterThan(1245);
+      expect(took).to.be.lessThan(1300);
       expect(tw(wrapped).interval).to.eql(200);
       done();
     }).catch(done);
@@ -227,8 +227,8 @@ describe('object rules', () => {
       }],
     });
     tester.run(() => wrapped('foo').catch(() => {})).then(({ took }) => {
-      expect(took).to.be.greaterThan(1570);
-      expect(took).to.be.lessThan(1625);
+      expect(took).to.be.greaterThan(1645);
+      expect(took).to.be.lessThan(1700);
       expect(tw(wrapped).interval).to.eql(200);
       done();
     }).catch(done);

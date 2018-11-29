@@ -4,8 +4,13 @@ const createInstance = require('./createInstance');
 const tw = wrapped => wrapped.throttlewrap;
 tw.wrap = (_fn, _options) => {
   const instance = createInstance(_fn, _options);
+  const { workers } = instance;
+
   const createWorker = () => {
-    const worker = { idle: true };
+    const worker = {
+      idle: true,
+      timeoutId: null,
+    };
 
     worker.stop = () => {
       if (!worker.idle) worker.stopWhenFinished = true;
@@ -13,12 +18,13 @@ tw.wrap = (_fn, _options) => {
 
     worker.doWork = (reschedulable) => {
       worker.idle = false;
+      worker.timeoutId = null;
 
       const now = Date.now();
       if (reschedulable) {
         if (worker.stopWhenFinished) return;
         if (instance.nextFreeTimeslot > now) {
-          setTimeout(worker.doWork, instance.nextFreeTimeslot - now);
+          worker.timeoutId = setTimeout(worker.doWork, instance.nextFreeTimeslot - now);
           instance.nextFreeTimeslot += instance.interval;
           return;
         }
@@ -49,7 +55,7 @@ tw.wrap = (_fn, _options) => {
       }
 
       if (!instance.threads && !worker.stopWhenFinished) {
-        setTimeout(worker.doWork, instance.nextFreeTimeslot - now);
+        worker.timeoutId = setTimeout(worker.doWork, instance.nextFreeTimeslot - now);
         instance.nextFreeTimeslot += instance.interval;
       }
     };
@@ -57,7 +63,7 @@ tw.wrap = (_fn, _options) => {
     return worker;
   };
 
-  const workers = [createWorker()];
+  workers.push(createWorker());
   const setWorkerNumber = () => {
     const setTo = instance.threads > 1 ? instance.threads : 1;
     const diff = setTo - workers.length;
