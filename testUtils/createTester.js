@@ -3,9 +3,11 @@ const createTester = ({
   fnDuration = 90,
   rejectAll = false,
   checkWorkerNumberAfter = 0,
+  fns = [],
 }) => {
   const tester = {
     runs,
+    completed: 0,
     maxSimultaneousCalls: 0,
     currentActiveCalls: 0,
     resolversWhenDone: [],
@@ -21,16 +23,17 @@ const createTester = ({
       }
       setTimeout(() => {
         if (countThread) tester.currentActiveCalls -= 1;
-        tester.remaining -= 1;
-        if (tester.remaining === 0) {
+        const fn = fns[tester.completed];
+        tester.completed += 1;
+        if (tester.completed === tester.runs) {
           tester.took = Date.now() - tester.started;
           setTimeout(() => tester.resolversWhenDone.forEach(reso => reso({ took: tester.took })));
         }
+        if (fn) return fn().then(resolve, reject);
         return rejectAll ? reject(new Error()) : resolve();
       }, fnDuration);
     }),
     run: (fn) => {
-      tester.remaining = tester.runs;
       tester.started = Date.now();
       for (let i = 0; i < tester.runs; i += 1) {
         fn();

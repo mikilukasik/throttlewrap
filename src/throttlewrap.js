@@ -31,8 +31,8 @@ tw.wrap = (_fn, _options) => {
         return;
       }
 
-      const dealWithRes = (err, res) => {
-        instance[instance.isError(err, res) ? 'lastErrorTime' : 'lastSuccessTime'] = Date.now();
+      const dealWithRes = (err, res, rejected) => {
+        instance[instance.isError(err, res, rejected) ? 'lastErrorTime' : 'lastSuccessTime'] = Date.now();
         processRules(instance);
         setWorkerNumber(); // eslint-disable-line no-use-before-define
         if (instance.threads) worker.doWork(true);
@@ -42,7 +42,10 @@ tw.wrap = (_fn, _options) => {
       if (job.type === 'callback') {
         instance.fn(...job.args, dealWithRes);
       } else {
-        instance.fn(...job.args).then(res => dealWithRes(null, res), dealWithRes);
+        instance.fn(...job.args).then(
+          res => dealWithRes(null, res),
+          err => dealWithRes(err, undefined, true),
+        );
       }
 
       if (!instance.threads && !worker.stopWhenFinished) {
