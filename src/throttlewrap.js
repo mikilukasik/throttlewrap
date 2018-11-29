@@ -13,7 +13,15 @@ tw.wrap = (_fn, _options) => {
     };
 
     worker.stop = () => {
-      if (!worker.idle) worker.stopWhenFinished = true;
+      if (worker.timeoutId) {
+        clearTimeout(worker.timeoutId);
+        worker.timeoutId = null;
+        instance.nextFreeTimeslot -= instance.interval;
+        worker.idle = true;
+        worker.stopped = true;
+        return;
+      }
+      worker.stopWhenFinished = true;
     };
 
     worker.doWork = (reschedulable) => {
@@ -22,7 +30,11 @@ tw.wrap = (_fn, _options) => {
 
       const now = Date.now();
       if (reschedulable) {
-        if (worker.stopWhenFinished) return;
+        if (worker.stopWhenFinished) {
+          worker.stopped = true;
+          worker.idle = true;
+          return;
+        }
         if (instance.nextFreeTimeslot > now) {
           worker.timeoutId = setTimeout(worker.doWork, instance.nextFreeTimeslot - now);
           instance.nextFreeTimeslot += instance.interval;
@@ -54,7 +66,7 @@ tw.wrap = (_fn, _options) => {
         );
       }
 
-      if (!instance.threads && !worker.stopWhenFinished) {
+      if (!instance.threads) {
         worker.timeoutId = setTimeout(worker.doWork, instance.nextFreeTimeslot - now);
         instance.nextFreeTimeslot += instance.interval;
       }
@@ -76,7 +88,10 @@ tw.wrap = (_fn, _options) => {
       }
       return;
     }
-    workers.splice(0, -diff).forEach(worker => worker.stop());
+    if (workers.length > 1) {
+      workers.splice(0, -diff).forEach(worker => worker.stop());
+      instance.rescheduleWorkers();
+    }
   };
   setWorkerNumber(instance.threads);
 

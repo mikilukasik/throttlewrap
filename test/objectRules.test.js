@@ -54,6 +54,29 @@ describe('object rules', () => {
     }).catch(done);
   });
 
+  it('removing threads immediately removes suspended workers', (done) => {
+    const tester = createTester({
+      runs: 8,
+      fnDuration: 400,
+      rejectAll: true,
+      checkWorkerNumberAfter: 800,
+    });
+    const wrapped = tw.wrap(tester.fnToThrottle, {
+      threads: 8,
+      rps: 10,
+      rules: [{
+        condition: { noSuccessPeriod: 310 },
+        action: { threads: { sub: 7 } },
+      }],
+    });
+    tester.run(() => wrapped('foo').catch(() => {})).then(({ took }) => {
+      expect(tester.maxSimultaneousCalls).to.eql(1);
+      expect(took).to.be.greaterThan(1695);
+      expect(took).to.be.lessThan(1750);
+      done();
+    }).catch(done);
+  });
+
   it('number of threads can not fall below 1 on a threaded instance', (done) => {
     const tester = createTester({
       runs: 120,
