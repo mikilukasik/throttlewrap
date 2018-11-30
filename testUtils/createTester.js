@@ -1,5 +1,5 @@
 const createTester = ({
-  runs = 5,
+  runs,
   fnDuration = 90,
   rejectAll = false,
   checkWorkerNumberAfter = 0,

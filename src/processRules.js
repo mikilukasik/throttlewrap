@@ -3,27 +3,78 @@
 /*    anti-pattern for performance    */
 /*                                    */
 
+const isNoMatch = (value, {
+  gt,
+  gte,
+  lt,
+  lte,
+  is,
+}) => {
+  if (gt && value <= gt) return true;
+  if (gte && value < gte) return true;
+  if (lt && value >= lt) return true;
+  if (lte && value > lte) return true;
+  if (is && value !== is) return true;
+  return false;
+};
+
+const getTimesFromStats = (statTimes, since) => {
+  const firstIndex = statTimes.findIndex(t => t >= since);
+  return firstIndex < 0 ? 0 : statTimes.length - firstIndex;
+};
+
+const getStatsForPeriod = (checkSince, { errorTimes, successTimes }) => {
+  const errorsInPeriod = getTimesFromStats(errorTimes, checkSince);
+  const successInPeriod = getTimesFromStats(successTimes, checkSince);
+  const totalInPeriod = errorsInPeriod + successInPeriod;
+  return { errorsInPeriod, successInPeriod, totalInPeriod };
+};
+
 const conditionMet = (rule, instance, now) => {
-  const { condition, lastApplied } = rule;
-  let result = true;
+  const {
+    condition: {
+      noErrorPeriod,
+      noSuccessPeriod,
+      errorRate,
+      successRate,
+    },
+    lastApplied,
+  } = rule;
+  const {
+    lastErrorTime,
+    lastSuccessTime,
+    firstCallTime,
+  } = instance;
 
-  if (condition.noErrorPeriod) {
-    const noErrorPeriod = now - (instance.lastErrorTime || instance.firstCallTime);
-    if (
-      condition.noErrorPeriod >= noErrorPeriod
-      || (lastApplied && (now - lastApplied < condition.noErrorPeriod))
-    ) result = false;
+  if (noErrorPeriod) {
+    const period = now - (lastErrorTime || firstCallTime);
+    if (noErrorPeriod >= period) return false;
+    if (lastApplied && (now - lastApplied < noErrorPeriod)) return false;
   }
 
-  if (condition.noSuccessPeriod) {
-    const noSuccessPeriod = now - (instance.lastSuccessTime || instance.firstCallTime);
-    if (
-      condition.noSuccessPeriod >= noSuccessPeriod
-      || (lastApplied && (now - lastApplied < condition.noSuccessPeriod))
-    ) result = false;
+  if (noSuccessPeriod) {
+    const period = now - (lastSuccessTime || firstCallTime);
+    if (noSuccessPeriod >= period) return false;
+    if (lastApplied && (now - lastApplied < noSuccessPeriod)) return false;
   }
 
-  return result;
+  if (errorRate) {
+    const { period } = errorRate;
+    const checkSince = now - period;
+    if ((lastApplied && lastApplied > checkSince) || (firstCallTime > checkSince)) return false;
+    const { errorsInPeriod, totalInPeriod } = getStatsForPeriod(checkSince, instance);
+    if (isNoMatch(errorsInPeriod / totalInPeriod, errorRate)) return false;
+  }
+
+  if (successRate) {
+    const { period } = successRate;
+    const checkSince = now - period;
+    if ((lastApplied && lastApplied > checkSince) || (firstCallTime > checkSince)) return false;
+    const { successInPeriod, totalInPeriod } = getStatsForPeriod(checkSince, instance);
+    if (isNoMatch(successInPeriod / totalInPeriod, successRate)) return false;
+  }
+
+  return true;
 };
 
 const applyAction = (rule, instance) => {
@@ -59,9 +110,8 @@ const applyAction = (rule, instance) => {
   }
 };
 
-const processRules = (instance) => {
+const processRules = (instance, now) => {
   if (!instance.rules) return;
-  const now = Date.now();
   const wasThreaded = instance.threads;
   const oldInterval = instance.interval;
 

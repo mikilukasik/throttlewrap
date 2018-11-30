@@ -49,9 +49,22 @@ tw.wrap = (_fn, _options) => {
         return;
       }
 
+      const pruneStats = (keepFromTime) => {
+        [instance.successTimes, instance.errorTimes].forEach((timesArray) => {
+          const keepFromIndex = timesArray.findIndex(t => t > keepFromTime);
+          timesArray.splice(0, keepFromIndex < 0 ? timesArray.length : keepFromIndex);
+        });
+      };
+
       const dealWithRes = (err, res, rejected) => {
-        instance[instance.isError(err, res, rejected) ? 'lastErrorTime' : 'lastSuccessTime'] = Date.now();
-        processRules(instance);
+        const isError = instance.isError(err, res, rejected);
+        const jobFinished = Date.now();
+        instance[isError ? 'lastErrorTime' : 'lastSuccessTime'] = jobFinished;
+        if (instance.statsPeriod) {
+          instance[isError ? 'errorTimes' : 'successTimes'].push(jobFinished);
+          pruneStats(jobFinished - instance.statsPeriod);
+        }
+        processRules(instance, jobFinished);
         setWorkerNumber(); // eslint-disable-line no-use-before-define
         if (instance.threads) worker.doWork(true);
         job.cb(err, res);
@@ -77,7 +90,7 @@ tw.wrap = (_fn, _options) => {
 
   workers.push(createWorker());
   const setWorkerNumber = () => {
-    const setTo = instance.threads > 1 ? instance.threads : 1;
+    const setTo = instance.threads > 1 ? Math.floor(instance.threads) : 1;
     const diff = setTo - workers.length;
     if (diff === 0) return;
     if (diff > 0) {
@@ -88,10 +101,8 @@ tw.wrap = (_fn, _options) => {
       }
       return;
     }
-    if (workers.length > 1) {
-      workers.splice(0, -diff).forEach(worker => worker.stop());
-      instance.rescheduleWorkers();
-    }
+    workers.splice(0, -diff).forEach(worker => worker.stop());
+    instance.rescheduleWorkers();
   };
   setWorkerNumber(instance.threads);
 

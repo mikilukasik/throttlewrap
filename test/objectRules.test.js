@@ -25,7 +25,7 @@ describe('object rules', () => {
       threadsMax: 20,
       rules: [{
         condition: { noErrorPeriod: 300 },
-        action: { threads: { add: 10 } },
+        action: { threads: { mul: 10 } },
       }],
     });
     tester.run(() => wrapped('foo')).then(() => {
@@ -50,6 +50,68 @@ describe('object rules', () => {
     });
     tester.run(() => wrapped('foo').catch(() => {})).then(() => {
       expect(tester.maxSimultaneousCalls).to.eql(15);
+      done();
+    }).catch(done);
+  });
+
+  it('can slow down using errorRate in an object rule', (done) => {
+    const res = () => Promise.resolve();
+    const rej = () => Promise.reject();
+    const tester = createTester({
+      runs: 8,
+      fnDuration: 100,
+      fns: [res, res, rej, rej, res, res, res, res],
+    });
+    const wrapped = tw.wrap(tester.fnToThrottle, {
+      rps: 10,
+      rules: [{
+        condition: {
+          errorRate: {
+            period: 250,
+            gt: 0.5,
+          },
+        },
+        action: {
+          rpm: {
+            div: 2,
+          },
+        },
+      }],
+    });
+    tester.run(() => wrapped('foo').catch(() => {})).then(({ took }) => {
+      expect(took).to.be.greaterThan(995);
+      expect(took).to.be.lessThan(1050);
+      done();
+    }).catch(done);
+  });
+
+  it('can speed up using successRate in an object rule', (done) => {
+    const res = () => Promise.resolve();
+    const rej = () => Promise.reject();
+    const tester = createTester({
+      runs: 8,
+      fnDuration: 100,
+      fns: [res, res, rej, rej, res, res, res, res],
+    });
+    const wrapped = tw.wrap(tester.fnToThrottle, {
+      rps: 10,
+      rules: [{
+        condition: {
+          successRate: {
+            period: 250,
+            gt: 0.6,
+          },
+        },
+        action: {
+          rpm: {
+            mul: 2,
+          },
+        },
+      }],
+    });
+    tester.run(() => wrapped('foo').catch(() => {})).then(({ took }) => {
+      expect(took).to.be.greaterThan(645);
+      expect(took).to.be.lessThan(700);
       done();
     }).catch(done);
   });
@@ -88,7 +150,7 @@ describe('object rules', () => {
       threads: 25,
       rules: [{
         condition: { noSuccessPeriod: 30 },
-        action: { threads: { sub: 10 } },
+        action: { threads: { div: 4 } },
       }],
     });
     tester.run(() => wrapped('foo').catch(() => {})).then(() => {
@@ -132,6 +194,21 @@ describe('object rules', () => {
       expect(took).to.be.greaterThan(1095);
       expect(took).to.be.lessThan(1150);
       expect(tw(wrapped).interval).to.eql(62.5);
+      done();
+    }).catch(done);
+  });
+
+  it('interval cannot fall below 0', (done) => {
+    const tester = createTester({ runs: 100, fnDuration: 15 });
+    const wrapped = tw.wrap(tester.fnToThrottle, {
+      interval: 40,
+      rules: [{
+        condition: { noErrorPeriod: 150 },
+        action: { interval: { sub: 25 } },
+      }],
+    });
+    tester.run(() => wrapped('foo')).then(() => {
+      expect(tw(wrapped).interval).to.eql(0);
       done();
     }).catch(done);
   });

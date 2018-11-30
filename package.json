@@ -20,7 +20,9 @@
     "throttle",
     "async",
     "promise",
-    "adaptive"
+    "adaptive",
+    "wrap",
+    "rate limiter"
   ],
   "author": "mikilukasik",
   "license": "MIT",

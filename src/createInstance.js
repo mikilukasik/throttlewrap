@@ -2,8 +2,8 @@ const rescheduleWorkers = require('./rescheduleWorkers');
 
 const defaultOptions = { isError: (err, res, rejected) => err || rejected };
 
-const createInstance = (fn, _options = {}) => {
-  const options = Object.assign({}, defaultOptions, { fn }, typeof fn === 'function' ? _options : fn);
+const createInstance = (_fn, _options) => {
+  const options = Object.assign({}, defaultOptions, { fn: _fn }, typeof _fn === 'function' ? _options : _fn);
   const {
     rpm,
     rpmMin,
@@ -14,15 +14,17 @@ const createInstance = (fn, _options = {}) => {
     threads,
     type,
     isError,
-    rules,
     threadsMin,
     threadsMax,
+    fn,
   } = options;
 
   let {
     interval,
     intervalMin,
     intervalMax,
+    statsPeriod,
+    rules,
   } = options;
 
   if (rpm) interval = 60000 / rpm;
@@ -37,13 +39,20 @@ const createInstance = (fn, _options = {}) => {
 
   if (options.rules) {
     if (!Array.isArray(options.rules)) throw new Error('Throttle wrapper rules need to be defined as an array');
-    options.rules = options.rules.map(r => (typeof r === 'function' ? r.bind({}) : Object.assign({}, r)));
-    if (options.rules.length === 0) delete options.rules;
+    rules = rules.map(r => (typeof r === 'function' ? r.bind({}) : JSON.parse(JSON.stringify(r))));
+    statsPeriod = statsPeriod || rules
+      .filter(r => typeof r === 'object')
+      .reduce((period, {
+        condition: { errorRate = {}, successRate = {} },
+      }) => Math.max(errorRate.period || successRate.period, period), 0);
+    if (rules.length === 0) rules = null;
   }
 
   const instance = {
     q: [],
     workers: [],
+    errorTimes: [],
+    successTimes: [],
     fn,
     threads,
     type,
@@ -54,6 +63,7 @@ const createInstance = (fn, _options = {}) => {
     intervalMax,
     isError,
     rules,
+    statsPeriod,
     lastErrorTime: null,
     lastSuccessTime: null,
     firstCallTime: null,
