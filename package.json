@@ -4,7 +4,7 @@
   "description": "Wrap and throttle async functions with adaptive processing",
   "main": "index.js",
   "scripts": {
-    "test": "nyc --check-coverage --lines 100 --functions 100 mocha",
+    "test": "nyc --check-coverage --lines 100 --functions 100 --statements 100 --branches 100 mocha",
     "lint": "./node_modules/.bin/eslint .",
     "lint-fix": "./node_modules/.bin/eslint . --fix"
   },

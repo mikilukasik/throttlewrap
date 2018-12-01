@@ -85,13 +85,106 @@ describe('object rules', () => {
     }).catch(done);
   });
 
-  it('can speed up using successRate in an object rule', (done) => {
+  it('can slow down using successCount in an object rule', (done) => {
     const res = () => Promise.resolve();
     const rej = () => Promise.reject();
     const tester = createTester({
       runs: 8,
       fnDuration: 100,
-      fns: [res, res, rej, rej, res, res, res, res],
+      fns: [res, rej, rej, res, res, rej, res, res],
+    });
+    const wrapped = tw.wrap(tester.fnToThrottle, {
+      rps: 10,
+      rules: [{
+        condition: {
+          successCount: {
+            period: 240,
+            lt: 2,
+          },
+        },
+        action: {
+          rpm: {
+            div: 1.5,
+          },
+        },
+      }],
+    });
+    tester.run(() => wrapped('foo').catch(() => {})).then(({ took }) => {
+      expect(took).to.be.greaterThan(1015);
+      expect(took).to.be.lessThan(1070);
+      done();
+    }).catch(done);
+  });
+
+  it('can speed up using errorRate in an object rule', (done) => {
+    const res = () => Promise.resolve();
+    const rej = () => Promise.reject();
+    const tester = createTester({
+      runs: 8,
+      fnDuration: 100,
+      fns: [res, res, rej, rej, res, rej, res, res],
+    });
+    const wrapped = tw.wrap(tester.fnToThrottle, {
+      rps: 10,
+      rules: [{
+        condition: {
+          errorRate: {
+            period: 120,
+            lte: 0.5,
+          },
+        },
+        action: {
+          interval: {
+            div: 1.25,
+          },
+        },
+      }],
+    });
+    tester.run(() => wrapped('foo').catch(() => {})).then(({ took }) => {
+      expect(took).to.be.greaterThan(699);
+      expect(took).to.be.lessThan(754);
+      done();
+    }).catch(done);
+  });
+
+  it('can slow down using errorCount in an object rule', (done) => {
+    const res = () => Promise.resolve();
+    const rej = () => Promise.reject();
+    const tester = createTester({
+      runs: 8,
+      fnDuration: 100,
+      fns: [rej, rej, rej, res, res, res, res, res],
+    });
+    const wrapped = tw.wrap(tester.fnToThrottle, {
+      rps: 10,
+      rules: [{
+        condition: {
+          errorCount: {
+            period: 300,
+            gte: 2,
+          },
+        },
+        action: {
+          rpm: {
+            div: 1.2,
+          },
+        },
+      }],
+    });
+    tester.run(() => wrapped('foo').catch(() => {})).then(({ took }) => {
+      expect(took).to.be.greaterThan(855);
+      expect(took).to.be.lessThan(910);
+      done();
+    }).catch(done);
+  });
+
+  it('can speed up using successRate in an object rule', (done) => {
+    const res = () => Promise.resolve();
+    const rej = () => Promise.reject();
+    const tester = createTester({
+      runs: 8,
+      fnDuration: 150,
+      fns: [res, res, rej, rej, res, rej, rej, rej],
     });
     const wrapped = tw.wrap(tester.fnToThrottle, {
       rps: 10,
@@ -99,7 +192,7 @@ describe('object rules', () => {
         condition: {
           successRate: {
             period: 250,
-            gt: 0.6,
+            is: 1,
           },
         },
         action: {
@@ -187,7 +280,7 @@ describe('object rules', () => {
       rpm: 240,
       rules: [{
         condition: { noErrorPeriod: 400 },
-        action: { rpm: { mul: 2 } },
+        action: { rps: { mul: 2 } },
       }],
     });
     tester.run(() => wrapped('foo')).then(({ took }) => {

@@ -37,6 +37,8 @@ const conditionMet = (rule, instance, now) => {
       noSuccessPeriod,
       errorRate,
       successRate,
+      errorCount,
+      successCount,
     },
     lastApplied,
   } = rule;
@@ -47,31 +49,41 @@ const conditionMet = (rule, instance, now) => {
   } = instance;
 
   if (noErrorPeriod) {
-    const period = now - (lastErrorTime || firstCallTime);
-    if (noErrorPeriod >= period) return false;
+    if (noErrorPeriod >= now - (lastErrorTime || firstCallTime)) return false;
     if (lastApplied && (now - lastApplied < noErrorPeriod)) return false;
   }
 
   if (noSuccessPeriod) {
-    const period = now - (lastSuccessTime || firstCallTime);
-    if (noSuccessPeriod >= period) return false;
+    if (noSuccessPeriod >= now - (lastSuccessTime || firstCallTime)) return false;
     if (lastApplied && (now - lastApplied < noSuccessPeriod)) return false;
   }
 
   if (errorRate) {
-    const { period } = errorRate;
-    const checkSince = now - period;
+    const checkSince = now - errorRate.period;
     if ((lastApplied && lastApplied > checkSince) || (firstCallTime > checkSince)) return false;
     const { errorsInPeriod, totalInPeriod } = getStatsForPeriod(checkSince, instance);
     if (isNoMatch(errorsInPeriod / totalInPeriod, errorRate)) return false;
   }
 
   if (successRate) {
-    const { period } = successRate;
-    const checkSince = now - period;
+    const checkSince = now - successRate.period;
     if ((lastApplied && lastApplied > checkSince) || (firstCallTime > checkSince)) return false;
     const { successInPeriod, totalInPeriod } = getStatsForPeriod(checkSince, instance);
     if (isNoMatch(successInPeriod / totalInPeriod, successRate)) return false;
+  }
+
+  if (errorCount) {
+    const checkSince = now - errorCount.period;
+    if ((lastApplied && lastApplied > checkSince) || (firstCallTime > checkSince)) return false;
+    const errorsInPeriod = getTimesFromStats(instance.errorTimes, checkSince);
+    if (isNoMatch(errorsInPeriod, errorCount)) return false;
+  }
+
+  if (successCount) {
+    const checkSince = now - successCount.period;
+    if ((lastApplied && lastApplied > checkSince) || (firstCallTime > checkSince)) return false;
+    const successInPeriod = getTimesFromStats(instance.successTimes, checkSince);
+    if (isNoMatch(successInPeriod, successCount)) return false;
   }
 
   return true;

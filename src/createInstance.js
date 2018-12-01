@@ -43,8 +43,16 @@ const createInstance = (_fn, _options) => {
     statsPeriod = statsPeriod || rules
       .filter(r => typeof r === 'object')
       .reduce((period, {
-        condition: { errorRate = {}, successRate = {} },
-      }) => Math.max(errorRate.period || successRate.period, period), 0);
+        condition: {
+          errorRate,
+          successRate,
+          errorCount,
+          successCount,
+        },
+      }) => Math.max(
+        (errorRate || successRate || errorCount || successCount || {}).period,
+        period,
+      ), 0);
     if (rules.length === 0) rules = null;
   }
 
