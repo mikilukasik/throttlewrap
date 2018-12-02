@@ -100,11 +100,13 @@ const applyAction = (rule, instance) => {
   if (rpm) {
     if (rpm.mul) instance.interval /= rpm.mul;
     if (rpm.div) instance.interval *= rpm.div;
+    if (rpm.set) instance.interval = 60000 / rpm.set;
   }
 
   if (rps) {
     if (rps.mul) instance.interval /= rps.mul;
     if (rps.div) instance.interval *= rps.div;
+    if (rps.set) instance.interval = 1000 / rps.set;
   }
 
   if (interval) {
@@ -112,6 +114,7 @@ const applyAction = (rule, instance) => {
     if (interval.div) instance.interval /= interval.div;
     if (interval.add) instance.interval += interval.add;
     if (interval.sub) instance.interval -= interval.sub;
+    if (interval.set) instance.interval = interval.set;
   }
 
   if (threads) {
@@ -119,6 +122,7 @@ const applyAction = (rule, instance) => {
     if (threads.div) instance.threads /= threads.div;
     if (threads.add) instance.threads += threads.add;
     if (threads.sub) instance.threads -= threads.sub;
+    if (threads.set) instance.threads = threads.set;
   }
 };
 

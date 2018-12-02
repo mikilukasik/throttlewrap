@@ -18,6 +18,21 @@ describe('object rules', () => {
     }).catch(done);
   });
 
+  it('can set number of threads using noErrorPeriod in an object rule', (done) => {
+    const tester = createTester({ runs: 300, fnDuration: 25 });
+    const wrapped = tw.wrap(tester.fnToThrottle, {
+      threads: 3,
+      rules: [{
+        condition: { noErrorPeriod: 300 },
+        action: { threads: { set: 13 } },
+      }],
+    });
+    tester.run(() => wrapped('foo')).then(() => {
+      expect(tester.maxSimultaneousCalls).to.eql(13);
+      done();
+    }).catch(done);
+  });
+
   it('using threadsMax limits the number of threads added by an object rule', (done) => {
     const tester = createTester({ runs: 500, fnDuration: 25 });
     const wrapped = tw.wrap(tester.fnToThrottle, {
@@ -274,7 +289,7 @@ describe('object rules', () => {
     }).catch(done);
   });
 
-  it('can multiply rpm using noErrorPeriod in an object rule', (done) => {
+  it('can multiply rps using noErrorPeriod in an object rule', (done) => {
     const tester = createTester({ runs: 6, fnDuration: 100 });
     const wrapped = tw.wrap(tester.fnToThrottle, {
       rpm: 240,
@@ -287,6 +302,21 @@ describe('object rules', () => {
       expect(took).to.be.greaterThan(1095);
       expect(took).to.be.lessThan(1150);
       expect(tw(wrapped).interval).to.eql(62.5);
+      done();
+    }).catch(done);
+  });
+
+  it('can set rpm using noErrorPeriod in an object rule', (done) => {
+    const tester = createTester({ runs: 6, fnDuration: 100 });
+    const wrapped = tw.wrap(tester.fnToThrottle, {
+      rpm: 240,
+      rules: [{
+        condition: { noErrorPeriod: 400 },
+        action: { rpm: { set: 480 } },
+      }],
+    });
+    tester.run(() => wrapped('foo')).then(() => {
+      expect(tw(wrapped).interval).to.eql(125);
       done();
     }).catch(done);
   });
@@ -319,6 +349,21 @@ describe('object rules', () => {
       expect(took).to.be.greaterThan(1845);
       expect(took).to.be.lessThan(1900);
       expect(tw(wrapped).interval).to.eql(500);
+      done();
+    }).catch(done);
+  });
+
+  it('can set rps using noSuccessPeriod in an object rule', (done) => {
+    const tester = createTester({ runs: 11, fnDuration: 100, rejectAll: true });
+    const wrapped = tw.wrap(tester.fnToThrottle, {
+      rpm: 480,
+      rules: [{
+        condition: { noSuccessPeriod: 700 },
+        action: { rps: { set: 20 } },
+      }],
+    });
+    tester.run(() => wrapped('foo').catch(() => {})).then(() => {
+      expect(tw(wrapped).interval).to.eql(50);
       done();
     }).catch(done);
   });
@@ -386,6 +431,21 @@ describe('object rules', () => {
     tester.run(() => wrapped('foo')).then(({ took }) => {
       expect(took).to.be.greaterThan(1145);
       expect(took).to.be.lessThan(1200);
+      expect(tw(wrapped).interval).to.eql(100);
+      done();
+    }).catch(done);
+  });
+
+  it('can set interval using noErrorPeriod in an object rule', (done) => {
+    const tester = createTester({ runs: 6, fnDuration: 100 });
+    const wrapped = tw.wrap(tester.fnToThrottle, {
+      rpm: 240,
+      rules: [{
+        condition: { noErrorPeriod: 260 },
+        action: { interval: { set: 100 } },
+      }],
+    });
+    tester.run(() => wrapped('foo')).then(() => {
       expect(tw(wrapped).interval).to.eql(100);
       done();
     }).catch(done);
