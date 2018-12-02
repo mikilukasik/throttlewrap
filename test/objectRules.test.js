@@ -235,7 +235,7 @@ describe('object rules', () => {
       threads: 8,
       rps: 10,
       rules: [{
-        condition: { noSuccessPeriod: 310 },
+        condition: { noSuccessPeriod: 330 },
         action: { threads: { sub: 7 } },
       }],
     });
