@@ -1,6 +1,6 @@
 {
   "name": "throttlewrap",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Wrap and throttle async functions with adaptive processing",
   "main": "index.js",
   "scripts": {
