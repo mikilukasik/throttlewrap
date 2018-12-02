@@ -126,11 +126,11 @@ None of these options are required, but you need to define the function to throt
 |statsPeriod|number|The number of milliseconds for which to keep the statistics for. If omitted, it will be determined by checking the conditions in the rules array
 
 ### The *rules* array
-An array of objects and/or functions describing when and how to adopt throttling. While function rules give more flexibility, in most cases using object rules is more convenient.
+An array of objects and/or functions describing when and how to adapt throttling. While function rules give more flexibility, in most cases using object rules is more convenient.
 
 ### Object rules
 
-Each rule object needs to have two keys, *condition* and *action*. These will get processed after each finished call, where the conditon is met, the action will be taken.
+Each rule object needs to have two keys, *condition* and *action*. These will get processed after each finished call, where the condition is met, the action will be taken.
 #### Condition object
 Defines the condition on which the action is to be taken. Needs to have at least one of the below keys. If more keys are defined there will be an **AND** relation between the multiple conditions. In order to use an OR relation, please define them as separate rules.
 
@@ -138,17 +138,48 @@ Defines the condition on which the action is to be taken. Needs to have at least
 |---|---|---|---|
 |noErrorPeriod|number|{ noErrorPeriod: 500 }|Condition will be met if no call will finish with error for the number of milliseconds. This is half a second in the example.
 |noSuccessPeriod|number|{ noSuccessPeriod: 2000 }|Condition will be met if all calls finish with error for the number of milliseconds. This is two seconds in the example.
-|errorRate|object|{ errorRate: { period: 1000, gt: 0.5 } }|Will trigger the action if the rate of errors satisfy the condition in the period. In this example the condition will be met if more than half of the finished calls in the last second errored. *period* is required, operator key can be *gt* - greater than, *gte* - greater or equal, *lt* - less than, *lte* - less or equal, *is* - equals. Values will fall between 0 and 1 inclusive.
+|errorRate|object|{ errorRate: { period: 1000, gt: 0.5 } }|Will trigger the action if the ratio of errors satisfy the condition in the period. In this example the condition will be met if more than half of the finished calls in the last second errored. *period* is required, operator key can be *gt* - greater than, *gte* - greater or equal, *lt* - less than, *lte* - less or equal, *is* - equals. Values will fall between 0 and 1 inclusive.
 |successRate|object|{ successRate: { period: 800, lte: 0.25 } }|Same as the above but checks the ratio of successful (not errored) calls. In this example the condition will be met if in the past 800 milliseconds only 25% or less of the calls finished without error. *period* is required, operator key can be *gt*, *gte*, *lt*, *lte*, or *is*
-|errorCount|object|{ errorCount: { period: 500, is: 3 } }|Similar to *errorRate* but rather than the ratio of errors, it looks at the number of errors. In this example the condition will be met if in the past half a second 3 calls finished with errors. *period* is required, operator key can be *gt*, *gte*, *lt*, *lte*, or *is*
+|errorCount|object|{ errorCount: { period: 500, is: 3 } }|Similar to *errorRate* but rather than the ratio, it looks at the number of errors. In this example the condition will be met if in the past half a second 3 calls finished with errors. *period* is required, operator key can be *gt*, *gte*, *lt*, *lte*, or *is*
 |successCount|object|{ successCount: { period: 1000, gte: 5 } }|Same as the above but checks the count of successful (not errored) calls. In this example the condition will be met if in the past second the number of successful calls is 5 or more. *period* is required, operator key can be *gt*, *gte*, *lt*, *lte*, or *is*
 
 #### Action object
-Defines the action to be taken when the condition is met. Needs to have at least one of the below keys. If more keys are defined there will be an **AND** relation between the multiple actions. Key values are objects in the format of { *operator*: *value* }
+Defines what to do when the condition is met. Needs to have at least one of the below keys. If more keys are defined all of the multiple actions will be processed. Key values are objects in the format of { *operator*: *value* }
 
 |key|example|description|
 |---|---|---|
 |threads|{ threads: { sub: 1 } }|Changes the number of threads. (The maximum number of simultaneous calls) This example action will remove one thread. Operators can be *mul* - multiply, *div* - divide, *add* - increase, *sub* - subtract, *set* - set to exact value
-|interval|{ interval: { set: 100 } }|Changes the interval, the number of milliseconds between calls. This example action will set the interval to 100, allowing a maximum of 10 calls per second. Operators can be *mul* - multiply, *div* - divide, *add* - increase, *sub* - subtract, *set* - set to exact value
-|rpm|{ rpm: { mul: 2 } }|Changes the rate per minute limit. In this example action the rpm gets doubled. Operators can be *mul* - multiply, *div* - divide, *set* - set to exact value
-|rps|{ rps: { set: 5 } }|Similar to the above, but adjusts the rate per second. In this example action the rps gets set to 5. Operators can be *mul* - multiply, *div* - divide, *set* - set to exact value
+|interval|{ interval: { set: 100 } }|Changes the interval, the number of milliseconds between calls. This example action will set the interval to 100, allowing a maximum of 10 calls per second. Operators can be *mul*, *div*, *add*, *sub* or *set*
+|rpm|{ rpm: { mul: 2 } }|Changes the rate per minute limit. In this example action the rpm gets doubled. Operators can be *mul*, *div* or *set*
+|rps|{ rps: { set: 5 } }|Similar to the above, but adjusts the rate per second. In this example action the rps gets set to 5. Operators can be *mul*, *div* or *set*
+
+### Function rules
+A rule can also be defined as a function describing the condition and action when using an object rule is not flexible enough. Each function rule will be executed after each finished call. The rule function will get an object as an input parameter, object keys are described in the table below. If the rule is to change the throttling parameters, it has to return an object with the to be modified key(s) and its new value. Note that rpm and rps are not in the object the rule function receives, but if returned it will be processed by converting it to interval
+
+|key|type|description|
+|---|---|---|
+|q|array|The pending calls waiting for execution. Each call is an object describing the arguments the function needs to be called with, the type of call (callback\|promise) and a callback that will be called once the function finished
+|errorTimes|array|An array of timestamps when the throttled function errored. It will only go back as far as it is defined in the *statsPeriod*
+|successTimes|array|An array of timestamps when the throttled function responded without error. It will only go back as far as it is defined in the *statsPeriod*
+|fn|async function|The function being throttled
+|threads|number|The number of threads - maximum number of simultaneous calls. Will be undefined if unlimited simultaneous calls are allowed
+|interval|number|The number of milliseconds that need to pass between each call
+|intervalMin|number|The smallest number interval can be adjusted to using rules
+|intervalMax|number|The largest number interval can be adjusted to using rules
+|rpmMin|number|The smallest number rpm can be adjusted to using rules. Will get converted to intervalMax
+|rpmMax|number|The largest number rpm can be adjusted to using rules. Will get converted to intervalMin
+|rpsMin|number|The smallest number rps can be adjusted to using rules. Will get converted to intervalMax
+|rpsMax|number|The largest number rps can be adjusted to using rules. Will get converted to intervalMin
+|threadsMin|number|The minimum number threads can be adjusted to using rules.
+|threadsMax|number|The maximum number threads can be adjusted to using rules.
+|isError|function|The function that checks if a call's response is to be treated as an error in the stats
+|type|string|Values can be 'promise' or 'callback', describing the type of function wrapped.
+|statsPeriod|number|The number of milliseconds for which to keep the statistics for.
+|lastErrorTime|number|The timestamp when the wrapped function last finished with error
+|lastError|any|The error returned from the last call. Will not have a value if the last call responded without error
+|lastSuccessTime|number|The timestamp when the wrapped function last finished without error
+|lastResult|any|The result returned from the last call. Will not have a value if the last call errored
+|firstCallTime|number|The timestamp when the wrapped function was first executed
+|nextFreeTimeslot|number|A timestamp for the next possible call to be scheduled to. This is not to be modified by the rule function, use interval/rpm/rps instead
+|lastCall|object|The arguments, type and callback of the last wrapped function call. This is written when the wrapped function is called, not when the actual execution started. It is the last element of the q array.
+

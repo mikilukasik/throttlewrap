@@ -59,6 +59,9 @@ tw.wrap = (_fn, _options) => {
       const dealWithRes = (err, res, rejected) => {
         const isError = instance.isError(err, res, rejected);
         const jobFinished = Date.now();
+        instance.lastError = err;
+        instance.lastResult = res;
+        instance.lastRejected = rejected;
         instance[isError ? 'lastErrorTime' : 'lastSuccessTime'] = jobFinished;
         if (instance.statsPeriod) {
           instance[isError ? 'errorTimes' : 'successTimes'].push(jobFinished);
