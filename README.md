@@ -7,9 +7,8 @@ npm i throttlewrap
 ```
 
 ### Usage
-```
-tw.wrap([functionToThrottle], options)
-```
+**tw.wrap([functionToThrottle], options)**
+
 It returns a wrapped version of *functionToThrottle* with rate limitation described in the *options* object.
 
 ### Simple uses
@@ -154,7 +153,7 @@ Defines what to do when the condition is met. Needs to have at least one of the 
 |rps|{ rps: { set: 5 } }|Similar to the above, but adjusts the rate per second. In this example action the rps gets set to 5. Operators can be *mul*, *div* or *set*
 
 ### Function rules
-A rule can also be defined as a function describing the condition and action when using an object rule is not flexible enough. Each function rule will be executed after each finished call. The rule function will get an object as an input parameter, object keys are described in the table below. If the rule is to change the throttling parameters, it has to return an object with the to be modified key(s) and its new value. Note that rpm and rps are not in the object the rule function receives, but if returned it will be processed by converting it to interval
+A rule can also be defined as a function describing the condition and action when using an object rule is not flexible enough. Each function rule will be executed after each finished call. The rule function will get an object as an input parameter, object keys are described in the table below. If the rule is to change the throttling parameters, it has to return an object with the to be modified key(s) and its new value. Note that rpm and rps are not in the object the rule function receives, and will not be processed if returned. Please use *interval* instead.
 
 |key|type|description|
 |---|---|---|
@@ -166,10 +165,10 @@ A rule can also be defined as a function describing the condition and action whe
 |interval|number|The number of milliseconds that need to pass between each call
 |intervalMin|number|The smallest number interval can be adjusted to using rules
 |intervalMax|number|The largest number interval can be adjusted to using rules
-|rpmMin|number|The smallest number rpm can be adjusted to using rules. Will get converted to intervalMax
-|rpmMax|number|The largest number rpm can be adjusted to using rules. Will get converted to intervalMin
-|rpsMin|number|The smallest number rps can be adjusted to using rules. Will get converted to intervalMax
-|rpsMax|number|The largest number rps can be adjusted to using rules. Will get converted to intervalMin
+|rpmMin|number|The smallest number rpm can be adjusted to using rules. This cannot be returned by the function rule, please use intervalMax instead
+|rpmMax|number|The largest number rpm can be adjusted to using rules. This cannot be returned by the function rule, please use intervalMin instead
+|rpsMin|number|The smallest number rps can be adjusted to using rules. This cannot be returned by the function rule, please use intervalMax instead
+|rpsMax|number|The largest number rps can be adjusted to using rules. This cannot be returned by the function rule, please use intervalMin instead
 |threadsMin|number|The minimum number threads can be adjusted to using rules.
 |threadsMax|number|The maximum number threads can be adjusted to using rules.
 |isError|function|The function that checks if a call's response is to be treated as an error in the stats
