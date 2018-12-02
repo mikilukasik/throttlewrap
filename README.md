@@ -8,12 +8,12 @@ npm i throttlewrap
 
 ### Usage
 ```
-tw.wrap([functionToThrottle], [options])
+tw.wrap([functionToThrottle], options)
 ```
 It returns a wrapped version of *functionToThrottle* with rate limitation described in the *options* object.
 
 ### Simple uses
-rpm limitation for a callback funtion:
+rpm limitation on a callback funtion:
 ```javascript
 const tw = require('throttlewrap');
 const request = require('request');
