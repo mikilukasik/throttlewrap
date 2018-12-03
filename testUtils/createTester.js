@@ -27,7 +27,7 @@ const createTester = ({
         tester.completed += 1;
         if (tester.completed === tester.runs) {
           tester.took = Date.now() - tester.started;
-          setTimeout(() => tester.resolversWhenDone.forEach(reso => reso({ took: tester.took })));
+          setTimeout(() => tester.resolversWhenDone.forEach(reso => reso(tester)));
         }
         if (fn) return fn().then(resolve, reject);
         return rejectAll ? reject(new Error()) : resolve();

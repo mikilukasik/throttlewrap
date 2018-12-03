@@ -29,14 +29,4 @@ describe('threads', () => {
       done();
     }).catch(done);
   });
-
-  it('with { threads: 2 }, 10 runs of a 300ms func take ~1.5 second', (done) => {
-    const tester = createTester({ runs: 10, fnDuration: 300 });
-    const wrapped = tw.wrap(tester.fnToThrottle, { threads: 2 });
-    tester.run(() => wrapped('foo')).then(({ took }) => {
-      expect(took).to.be.greaterThan(1495);
-      expect(took).to.be.lessThan(1550);
-      done();
-    }).catch(done);
-  });
 });

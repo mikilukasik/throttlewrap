@@ -3,22 +3,22 @@ const tw = require('..');
 const createTester = require('../testUtils/createTester');
 
 describe('rpm', () => {
-  it('with { rpm: 120 }, 3 runs of a 200ms func take ~1.2 seconds', (done) => {
-    const tester = createTester({ runs: 3, fnDuration: 200 });
-    const wrapped = tw.wrap(tester.fnToThrottle, { rpm: 120 });
+  it('with { rpm: 480 }, 3 runs of a 20ms func take ~270ms', (done) => {
+    const tester = createTester({ runs: 3, fnDuration: 20 });
+    const wrapped = tw.wrap(tester.fnToThrottle, { rpm: 480 });
     tester.run(() => wrapped('foo')).then(({ took }) => {
-      expect(took).to.be.greaterThan(1195);
-      expect(took).to.be.lessThan(1250);
+      expect(took).to.be.greaterThan(267);
+      expect(took).to.be.lessThan(300);
       done();
     }).catch(done);
   });
 
-  it('with { rps: 4 }, 6 runs of a 400ms func take ~1.65 seconds', (done) => {
-    const tester = createTester({ runs: 6, fnDuration: 400 });
-    const wrapped = tw.wrap(tester.fnToThrottle, { rps: 4 });
+  it('with { rps: 20 }, 6 runs of a 80ms func take ~330ms', (done) => {
+    const tester = createTester({ runs: 6, fnDuration: 80 });
+    const wrapped = tw.wrap(tester.fnToThrottle, { rps: 20 });
     tester.run(() => wrapped('foo')).then(({ took }) => {
-      expect(took).to.be.greaterThan(1645);
-      expect(took).to.be.lessThan(1700);
+      expect(took).to.be.greaterThan(327);
+      expect(took).to.be.lessThan(360);
       done();
     }).catch(done);
   });
